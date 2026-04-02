@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Smart Cast — Companion App</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#06111a;
+  --bg2:#091929;
+  --bg3:#0d2035;
+  --teal:#0d9488;
+  --teal2:#2dd4bf;
+  --teal3:#99f6e4;
+  --navy:#0b2035;
+  --white:#f0faf8;
+  --muted:#6b8fa3;
+  --border:rgba(45,212,191,0.15);
+  --border2:rgba(45,212,191,0.08);
+  --warn:#f59e0b;
+  --danger:#ef4444;
+  --good:#10b981;
+  --card:rgba(13,32,53,0.8);
+  --radius:14px;
+  --font:'DM Sans',sans-serif;
+  --font-display:'Syne',sans-serif;
+  --font-mono:'DM Mono',monospace;
+}
+html,body{width:100%;height:100%;background:var(--bg);color:var(--white);font-family:var(--font);overflow:hidden;}
+
+/* ── LAYOUT ── */
+#root{display:flex;height:100vh;width:100vw;overflow:hidden;}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  width:72px;flex-shrink:0;
+  background:rgba(6,17,26,0.98);
+  border-right:1px solid var(--border2);
+  display:flex;flex-direction:column;align-items:center;
+  padding:1.25rem 0;gap:0.25rem;
+  z-index:50;
+}
+.sb-logo{
+  width:42px;height:42px;border-radius:12px;
+  background:linear-gradient(135deg,var(--teal),var(--teal2));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-weight:800;font-size:1rem;
+  color:#fff;margin-bottom:1.25rem;letter-spacing:-0.03em;
+  box-shadow:0 0 20px rgba(45,212,191,0.3);
+}
+.sb-nav{
+  display:flex;flex-direction:column;gap:0.25rem;width:100%;
+  align-items:center;flex:1;
+}
+.sb-btn{
+  width:48px;height:48px;border-radius:12px;border:none;
+  background:transparent;color:var(--muted);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  cursor:pointer;transition:all 0.2s;font-size:1.15rem;
+  position:relative;
+}
+.sb-btn span{font-size:0.42rem;letter-spacing:0.05em;text-transform:uppercase;font-family:var(--font-mono);line-height:1;}
+.sb-btn:hover{background:rgba(45,212,191,0.08);color:var(--teal2);}
+.sb-btn.active{background:rgba(45,212,191,0.12);color:var(--teal2);}
+.sb-btn.active::before{
+  content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:3px;height:24px;background:var(--teal2);border-radius:0 3px 3px 0;
+}
+.sb-badge{
+  position:absolute;top:6px;right:6px;
+  background:var(--danger);color:#fff;
+  width:16px;height:16px;border-radius:50%;
+  font-size:0.55rem;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);font-weight:500;
+}
+.sb-avatar{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,#1a4060,#0d9488);
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.75rem;font-weight:600;color:#fff;
+  border:2px solid var(--border);margin-top:auto;
+}
+
+/* ── MAIN ── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ── TOP BAR ── */
+#topbar{
+  height:56px;flex-shrink:0;
+  background:rgba(6,17,26,0.96);
+  border-bottom:1px solid var(--border2);
+  display:flex;align-items:center;padding:0 1.5rem;gap:1rem;
+  backdrop-filter:blur(10px);
+}
+#topbar h1{
+  font-family:var(--font-display);font-size:1rem;font-weight:700;
+  color:var(--white);letter-spacing:-0.01em;flex:1;
+}
+.view-toggle{
+  display:flex;background:var(--bg3);border-radius:8px;padding:3px;
+  border:1px solid var(--border2);
+}
+.vt-btn{
+  padding:0.3rem 0.9rem;border-radius:6px;border:none;
+  background:transparent;color:var(--muted);
+  font-family:var(--font-mono);font-size:0.65rem;letter-spacing:0.08em;
+  text-transform:uppercase;cursor:pointer;transition:all 0.2s;
+}
+.vt-btn.active{background:var(--teal);color:#fff;}
+.status-pill{
+  display:flex;align-items:center;gap:0.4rem;
+  background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);
+  border-radius:20px;padding:0.25rem 0.75rem;
+  font-size:0.7rem;color:var(--good);font-family:var(--font-mono);
+}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--good);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.6;transform:scale(0.85);}}
+
+/* ── CONTENT ── */
+#content{flex:1;overflow-y:auto;padding:1.5rem;display:grid;gap:1rem;}
+#content::-webkit-scrollbar{width:4px;}
+#content::-webkit-scrollbar-track{background:transparent;}
+#content::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* ── VIEWS ── */
+.view{display:none;}
+.view.active{display:contents;}
+
+/* ── CARDS ── */
+.card{
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:var(--radius);padding:1.25rem;
+  backdrop-filter:blur(8px);
+}
+.card-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:1rem;
+}
+.card-title{
+  font-family:var(--font-mono);font-size:0.62rem;
+  letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);
+}
+.card-value{
+  font-family:var(--font-display);font-size:2rem;font-weight:700;
+  line-height:1;color:var(--white);
+}
+.card-value.good{color:var(--good);}
+.card-value.warn{color:var(--warn);}
+.card-value.danger{color:var(--danger);}
+.card-sub{font-size:0.72rem;color:var(--muted);margin-top:0.25rem;}
+
+/* ── GRID LAYOUTS ── */
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;}
+.grid-2-1{display:grid;grid-template-columns:2fr 1fr;gap:1rem;}
+.grid-1-2{display:grid;grid-template-columns:1fr 2fr;gap:1rem;}
+
+/* ── GAUGE ── */
+.gauge-wrap{position:relative;width:100%;padding-bottom:60%;overflow:visible;}
+.gauge-wrap svg{position:absolute;top:0;left:0;width:100%;height:100%;}
+
+/* ── SPARKLINE ── */
+.spark-wrap{width:100%;height:44px;margin-top:0.5rem;}
+.spark-wrap svg{width:100%;height:100%;}
+
+/* ── ALERT ITEMS ── */
+.alert-item{
+  display:flex;gap:0.75rem;align-items:flex-start;
+  padding:0.75rem;border-radius:10px;margin-bottom:0.5rem;
+  border:1px solid transparent;
+}
+.alert-item.warn{background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.2);}
+.alert-item.good{background:rgba(16,185,129,0.06);border-color:rgba(16,185,129,0.15);}
+.alert-item.danger{background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.2);}
+.alert-icon{font-size:1rem;flex-shrink:0;margin-top:0.1rem;}
+.alert-title{font-size:0.8rem;font-weight:600;color:var(--white);margin-bottom:0.15rem;}
+.alert-desc{font-size:0.72rem;color:var(--muted);line-height:1.5;}
+.alert-time{font-family:var(--font-mono);font-size:0.58rem;color:var(--muted);margin-top:0.25rem;}
+
+/* ── HEALING TIMELINE ── */
+.timeline{display:flex;flex-direction:column;gap:0;}
+.tl-item{display:flex;gap:1rem;position:relative;}
+.tl-item:not(:last-child)::before{
+  content:'';position:absolute;left:15px;top:32px;bottom:0;
+  width:1px;background:var(--border2);
+}
+.tl-dot{
+  width:30px;height:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.7rem;flex-shrink:0;margin-top:4px;
+  border:2px solid transparent;
+}
+.tl-dot.done{background:rgba(16,185,129,0.15);border-color:var(--good);color:var(--good);}
+.tl-dot.active{background:rgba(45,212,191,0.15);border-color:var(--teal2);color:var(--teal2);animation:pulse 2s infinite;}
+.tl-dot.pending{background:rgba(107,143,163,0.1);border-color:var(--border);color:var(--muted);}
+.tl-body{padding:0.5rem 0 1.25rem;}
+.tl-label{font-size:0.82rem;font-weight:600;color:var(--white);}
+.tl-date{font-family:var(--font-mono);font-size:0.6rem;color:var(--muted);margin-top:0.15rem;}
+.tl-note{font-size:0.72rem;color:var(--muted);margin-top:0.25rem;line-height:1.5;}
+
+/* ── PROGRESS BAR ── */
+.prog-bar{height:6px;border-radius:3px;background:var(--bg3);overflow:hidden;margin-top:0.5rem;}
+.prog-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--teal),var(--teal2));transition:width 1s ease;}
+
+/* ── SENSOR BAR ── */
+.sensor-bar{
+  display:flex;align-items:center;gap:0.75rem;
+  padding:0.6rem 0;border-bottom:1px solid var(--border2);
+}
+.sensor-bar:last-child{border-bottom:none;}
+.sensor-name{font-size:0.72rem;color:var(--muted);width:90px;flex-shrink:0;font-family:var(--font-mono);}
+.sensor-track{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+.sensor-fill{height:100%;border-radius:3px;transition:width 0.8s ease;}
+.sensor-fill.good{background:var(--good);}
+.sensor-fill.warn{background:var(--warn);}
+.sensor-fill.danger{background:var(--danger);}
+.sensor-val{font-family:var(--font-mono);font-size:0.65rem;width:50px;text-align:right;flex-shrink:0;}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:0.25rem;margin-bottom:1rem;border-bottom:1px solid var(--border2);padding-bottom:0.5rem;}
+.tab-btn{
+  padding:0.4rem 0.9rem;border-radius:6px;border:none;
+  background:transparent;color:var(--muted);
+  font-size:0.72rem;font-weight:500;cursor:pointer;transition:all 0.2s;
+  font-family:var(--font);
+}
+.tab-btn.active{background:rgba(45,212,191,0.12);color:var(--teal2);}
+.tab-btn:hover{color:var(--white);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ── PATIENT LIST ── */
+.patient-row{
+  display:flex;align-items:center;gap:0.75rem;
+  padding:0.75rem;border-radius:10px;cursor:pointer;
+  border:1px solid transparent;transition:all 0.2s;margin-bottom:0.35rem;
+}
+.patient-row:hover{background:rgba(45,212,191,0.05);border-color:var(--border);}
+.patient-row.selected{background:rgba(45,212,191,0.08);border-color:var(--teal2);}
+.pat-avatar{
+  width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.75rem;font-weight:700;color:#fff;flex-shrink:0;
+}
+.pat-name{font-size:0.82rem;font-weight:600;color:var(--white);}
+.pat-sub{font-size:0.68rem;color:var(--muted);}
+.pat-status{margin-left:auto;font-size:0.65rem;padding:0.2rem 0.55rem;border-radius:20px;font-family:var(--font-mono);}
+.pat-status.good{background:rgba(16,185,129,0.12);color:var(--good);}
+.pat-status.warn{background:rgba(245,158,11,0.12);color:var(--warn);}
+.pat-status.danger{background:rgba(239,68,68,0.12);color:var(--danger);}
+
+/* ── CHART CANVAS ── */
+.chart-canvas{width:100%;height:140px;margin-top:0.5rem;}
+
+/* ── NOTIFICATION BADGE ── */
+.notif-count{
+  background:var(--danger);color:#fff;
+  font-size:0.6rem;padding:0.1rem 0.35rem;border-radius:10px;
+  font-family:var(--font-mono);margin-left:0.35rem;
+}
+
+/* ── TOGGLE SWITCH ── */
+.toggle-switch{position:relative;display:inline-block;width:36px;height:20px;}
+.toggle-switch input{opacity:0;width:0;height:0;}
+.toggle-slider{
+  position:absolute;inset:0;background:var(--bg3);border-radius:20px;
+  cursor:pointer;transition:0.3s;border:1px solid var(--border);
+}
+.toggle-slider::before{
+  content:'';position:absolute;width:14px;height:14px;
+  left:2px;top:2px;background:var(--muted);border-radius:50%;transition:0.3s;
+}
+.toggle-switch input:checked + .toggle-slider{background:var(--teal);}
+.toggle-switch input:checked + .toggle-slider::before{transform:translateX(16px);background:#fff;}
+
+/* ── SETTINGS ROW ── */
+.setting-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0.75rem 0;border-bottom:1px solid var(--border2);
+}
+.setting-row:last-child{border-bottom:none;}
+.setting-label{font-size:0.82rem;color:var(--white);}
+.setting-sub{font-size:0.68rem;color:var(--muted);margin-top:0.15rem;}
+
+/* ── MAP PLACEHOLDER ── */
+.body-map{
+  width:100%;aspect-ratio:1.6;
+  background:var(--bg3);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;border:1px solid var(--border2);
+}
+
+/* ── LIVE INDICATOR ── */
+.live-badge{
+  display:inline-flex;align-items:center;gap:0.35rem;
+  background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);
+  border-radius:20px;padding:0.2rem 0.6rem;
+  font-size:0.6rem;color:#f87171;font-family:var(--font-mono);
+}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#ef4444;animation:pulse 1s infinite;}
+
+/* ── BIG STAT ── */
+.big-stat{text-align:center;padding:1rem 0;}
+.big-stat .num{
+  font-family:var(--font-display);font-size:3rem;font-weight:800;
+  color:var(--teal2);line-height:1;
+}
+.big-stat .label{font-size:0.72rem;color:var(--muted);margin-top:0.35rem;}
+
+/* ── ZONE MAP ── */
+.zone-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-top:0.75rem;}
+.zone{
+  border-radius:8px;padding:0.6rem;text-align:center;
+  border:1px solid transparent;
+}
+.zone.ok{background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.2);}
+.zone.warn{background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.2);}
+.zone-name{font-size:0.6rem;font-family:var(--font-mono);color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;}
+.zone-val{font-size:0.82rem;font-weight:600;margin-top:0.2rem;}
+.zone.ok .zone-val{color:var(--good);}
+.zone.warn .zone-val{color:var(--warn);}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+.card{animation:fadeUp 0.35s ease both;}
+.card:nth-child(1){animation-delay:0.05s;}
+.card:nth-child(2){animation-delay:0.1s;}
+.card:nth-child(3){animation-delay:0.15s;}
+.card:nth-child(4){animation-delay:0.2s;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
+</head>
+<body>
+<div id="root">
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sb-logo">SC</div>
+    <nav class="sb-nav">
+      <button class="sb-btn active" onclick="switchPage('dashboard')" title="Dashboard">
+        <span>⬡</span><span>Home</span>
+      </button>
+      <button class="sb-btn" onclick="switchPage('sensors')" title="Sensors">
+        <span>◎</span><span>Sensors</span>
+      </button>
+      <button class="sb-btn" onclick="switchPage('healing')" title="Healing">
+        <span>↑</span><span>Healing</span>
+      </button>
+      <button class="sb-btn" onclick="switchPage('alerts')" title="Alerts" id="sb-alerts">
+        <span>⚑</span><span>Alerts</span>
+        <div class="sb-badge" id="alert-badge">2</div>
+      </button>
+      <button class="sb-btn" onclick="switchPage('clinician')" title="Clinician">
+        <span>✚</span><span>Doctor</span>
+      </button>
+      <button class="sb-btn" onclick="switchPage('settings')" title="Settings">
+        <span>⚙</span><span>Settings</span>
+      </button>
+    </nav>
+    <div class="sb-avatar">JM</div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+    <!-- TOPBAR -->
+    <div id="topbar">
+      <h1 id="page-title">Dashboard</h1>
+      <div class="live-badge"><div class="live-dot"></div>Live</div>
+      <div class="view-toggle">
+        <button class="vt-btn active" onclick="switchView('patient',this)">Patient</button>
+        <button class="vt-btn" onclick="switchView('clinician-top',this)">Clinician</button>
+      </div>
+      <div class="status-pill"><div class="status-dot"></div>Cast Active · Day 12</div>
+    </div>
+
+    <!-- CONTENT -->
+    <div id="content">
+
+      <!-- ════════ DASHBOARD ════════ -->
+      <div class="view active" id="page-dashboard">
+        <!-- row 1: 4 metric cards -->
+        <div class="grid-4">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Moisture</span>
+              <span style="font-size:1.2rem">💧</span>
+            </div>
+            <div class="card-value good" id="m-moisture">18%</div>
+            <div class="card-sub">Normal range · ↓2% from yesterday</div>
+            <div class="spark-wrap"><canvas class="chart-canvas" id="spark-moisture" style="height:40px"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Pressure</span>
+              <span style="font-size:1.2rem">⊕</span>
+            </div>
+            <div class="card-value good" id="m-pressure">42 mmHg</div>
+            <div class="card-sub">Optimal range · Stable</div>
+            <div class="spark-wrap"><canvas class="chart-canvas" id="spark-pressure" style="height:40px"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Temperature</span>
+              <span style="font-size:1.2rem">🌡</span>
+            </div>
+            <div class="card-value good" id="m-temp">34.2°C</div>
+            <div class="card-sub">Skin surface · Normal</div>
+            <div class="spark-wrap"><canvas class="chart-canvas" id="spark-temp" style="height:40px"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Movement</span>
+              <span style="font-size:1.2rem">↯</span>
+            </div>
+            <div class="card-value" id="m-movement" style="color:var(--teal2)">Low</div>
+            <div class="card-sub">Rest mode · Compliant</div>
+            <div class="spark-wrap"><canvas class="chart-canvas" id="spark-movement" style="height:40px"></canvas></div>
+          </div>
+        </div>
+
+        <!-- row 2: healing + alerts + fit -->
+        <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:1rem;">
+          <div class="card">
+            <div class="card-header">
+              <!-- omitted 432-434 content -->
+            </div>
+            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+              <!-- omitted 436-444 content -->
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+              <!-- omitted 446-454 content -->
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <!-- omitted 459-461 content -->
+            </div>
+            <div class="alert-item warn">
+              <!-- omitted 463-469 content -->
+            </div>
+            <div class="alert-item good">
+              <!-- omitted 471-477 content -->
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <!-- omitted 482-484 content -->
+            </div>
+            <div class="zone-grid">
+              <!-- omitted 486-492 content -->
+            </div>
+            <div style="font-size:0.68rem;color:var(--muted);margin-top:0.75rem;">5 of 6 zones optimal. Zone 3 adjusting.</div>
+          </div>
+        </div>
+
+        <!-- row 3: 24hr chart + next appt -->
+        <div class="grid-2-1">
+          <div class="card">
+            <div class="card-header">
+              <!-- omitted 501-507 content -->
+            </div>
+            <canvas id="main-chart" style="width:100%;height:160px;display:block;"></canvas>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Care Schedule</span></div>
+            <div style="display:flex;flex-direction:column;gap:0.6rem;">
+              <!-- omitted 513-527 content -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ SENSORS ════════ -->
+      <div class="view" id="page-sensors">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Moisture Sensor</span><span class="live-badge" style="font-size:0.55rem;padding:0.15rem 0.4rem;"><div class="live-dot"></div>Live</span></div>
+            <div style="font-family:var(--font-display);font-size:3rem;font-weight:800;color:var(--teal2);" id="s-moisture">18%</div>
+            <div style="font-size:0.72rem;color:var(--muted);margin-bottom:1rem;">Skin surface relative humidity</div>
+            <div class="sensor-bar">
+              <!-- omitted 540-543 content -->
+            </div>
+            <div class="sensor-bar">
+              <!-- omitted 545-548 content -->
+            </div>
+            <div class="sensor-bar">
+              <!-- omitted 550-553 content -->
+            </div>
+            <canvas id="chart-moisture" style="width:100%;height:100px;display:block;margin-top:1rem;"></canvas>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><span class="card-title">Pressure Sensor</span><span class="live-badge" style="font-size:0.55rem;padding:0.15rem 0.4rem;"><div class="live-dot"></div>Live</span></div>
+            <div style="font-family:var(--font-display);font-size:3rem;font-weight:800;color:var(--good);" id="s-pressure">42 mmHg</div>
+            <div style="font-size:0.72rem;color:var(--muted);margin-bottom:1rem;">Cast internal pressure distribution</div>
+            <div class="sensor-bar">
+              <!-- omitted 562-565 content -->
+            </div>
+            <div class="sensor-bar">
+              <!-- omitted 567-570 content -->
+            </div>
+            <div class="sensor-bar">
+              <!-- omitted 572-575 content -->
+            </div>
+            <div class="sensor-bar">
+              <!-- omitted 577-580 content -->
+            </div>
+            <canvas id="chart-pressure" style="width:100%;height:100px;display:block;margin-top:1rem;"></canvas>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><span class="card-title">Temperature Sensor</span><span class="live-badge" style="font-size:0.55rem;padding:0.15rem 0.4rem;"><div class="live-dot"></div>Live</span></div>
+            <div style="font-family:var(--font-display);font-size:3rem;font-weight:800;color:var(--teal2);" id="s-temp">34.2°C</div>
+            <div style="font-size:0.72rem;color:var(--muted);margin-bottom:1rem;">Skin surface temperature (inflammation proxy)</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-bottom:0.75rem;">
+              <!-- omitted 589-601 content -->
+            </div>
+            <canvas id="chart-temp" style="width:100%;height:100px;display:block;margin-top:1rem;"></canvas>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><span class="card-title">Movement Sensor</span><span class="live-badge" style="font-size:0.55rem;padding:0.15rem 0.4rem;"><div class="live-dot"></div>Live</span></div>
+            <div style="font-family:var(--font-display);font-size:3rem;font-weight:800;color:var(--good);">Low</div>
+            <div style="font-size:0.72rem;color:var(--muted);margin-bottom:1rem;">Activity compliance monitoring</div>
+            <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.75rem;">
+              <!-- omitted 610-625 content -->
+            </div>
+            <div style="background:rgba(16,185,129,0.06);border-radius:8px;padding:0.65rem;border:1px solid rgba(16,185,129,0.15);">
+              <!-- omitted 627-629 content -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ HEALING ════════ -->
+      <div class="view" id="page-healing">
+        <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:1rem;">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Healing Timeline</span></div>
+            <div style="margin-bottom:1rem;">
+              <!-- omitted 640-644 content -->
+            </div>
+            <div class="timeline">
+              <!-- omitted 646-694 content -->
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:1rem;">
+            <div class="card">
+              <!-- omitted 699-726 content -->
+            </div>
+            <div class="card">
+              <!-- omitted 728-730 content -->
+            </div>
+            <div class="card">
+              <!-- omitted 732-747 content -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ ALERTS ════════ -->
+      <div class="view" id="page-alerts">
+        <div class="grid-2-1">
+          <div class="card">
+            <div class="card-header">
+              <!-- omitted 757-763 content -->
+            </div>
+            <div id="alert-list">
+              <!-- omitted 765-805 content -->
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:1rem;">
+            <div class="card">
+              <!-- omitted 809-824 content -->
+            </div>
+            <div class="card">
+              <!-- omitted 826-839 content -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ CLINICIAN ════════ -->
+      <div class="view" id="page-clinician">
+        <div style="display:grid;grid-template-columns:240px 1fr;gap:1rem;height:100%;">
+          <div class="card" style="overflow-y:auto;">
+            <div class="card-header"><span class="card-title">My Patients</span></div>
+            <div id="patient-list">
+              <!-- omitted 850-882 content -->
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:1rem;overflow-y:auto;">
+            <div class="card">
+              <!-- omitted 887-919 content -->
+            </div>
+
+            <div class="grid-2" style="align-items:start;">
+              <!-- omitted 922-946 content -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ SETTINGS ════════ -->
+      <div class="view" id="page-settings">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Patient Profile</span></div>
+            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;">
+              <!-- omitted 957-963 content -->
+            </div>
+            <div class="setting-row">
+              <!-- omitted 965-966 content -->
+            </div>
+            <div class="setting-row">
+              <!-- omitted 968-969 content -->
+            </div>
+            <div class="setting-row">
+              <!-- omitted 971-972 content -->
+            </div>
+            <div class="setting-row">
+              <!-- omitted 974-975 content -->
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><span class="card-title">App Settings</span></div>
+            <div class="setting-row">
+              <!-- omitted 981-983 content -->
+            </div>
+            <div class="setting-row">
+              <!-- omitted 985-987 content -->
+            </div>
+            <div class="setting-row">
+              <!-- omitted 989-991 content -->
+            </div>
+            <div class="setting-row">
+              <!-- omitted 993-995 content -->
+            </div>
+            <div class="setting-row">
+              <!-- omitted 997-999 content -->
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><span class="card-title">Alert Thresholds</span></div>
+            <div class="sensor-bar" style="padding:0.75rem 0;">
+              <!-- omitted 1005-1008 content -->
+            </div>
+            <div class="sensor-bar" style="padding:0.75rem 0;">
+              <!-- omitted 1010-1013 content -->
+            </div>
+            <div class="sensor-bar" style="padding:0.75rem 0;">
+              <!-- omitted 1015-1018 content -->
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><span class="card-title">Device Status</span></div>
+            <div style="display:flex;flex-direction:column;gap:0.6rem;">
+              <!-- omitted 1024-1045 content -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /root -->
+
+<script>
+// ── PAGE NAVIGATION ──
+const pages = ['dashboard','sensors','healing','alerts','clinician','settings'];
+function switchPage(id){
+  pages.forEach(p=>{
+    document.getElementById('page-'+p).classList.toggle('active',p===id);
+  });
+  document.querySelectorAll('.sb-btn').forEach((b,i)=>{
+    b.classList.toggle('active',pages[i]===id);
+  });
+  const titles={dashboard:'Dashboard',sensors:'Live Sensors',healing:'Healing Timeline',alerts:'Alerts & Notifications',clinician:'Clinician Dashboard',settings:'Settings'};
+  document.getElementById('page-title').textContent=titles[id];
+}
+
+// ── VIEW TOGGLE ──
+function switchView(v,btn){
+  document.querySelectorAll('.vt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(v==='clinician-top') switchPage('clinician');
+  else switchPage('dashboard');
+}
+
+// ── ALERT FILTER ──
+function filterAlerts(type,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.alert-item').forEach(el=>{
+    el.style.display=(type==='all'||el.dataset.type===type)?'flex':'none';
+  });
+}
+
+// ── PATIENT SELECT ──
+function selectPatient(el,name){
+  document.querySelectorAll('.patient-row').forEach(r=>r.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('clin-name').textContent=name;
+}
+
+// ── NOTES ──
+function addNote(){document.getElementById('note-input-area').style.display='block';}
+function cancelNote(){document.getElementById('note-input-area').style.display='none';}
+function saveNote(){
+  const txt=document.getElementById('note-text').value.trim();
+  if(!txt)return;
+  const list=document.getElementById('notes-list');
+  const d=document.createElement('div');
+  d.style.cssText='background:var(--bg3);border-radius:8px;padding:0.65rem;';
+  const today=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  d.innerHTML=`<div style="font-size:0.62rem;color:var(--muted);font-family:var(--font-mono);">DR. PATEL · ${today}</div><div style="font-size:0.75rem;color:rgba(255,255,255,0.8);margin-top:0.2rem;line-height:1.5;">"${txt}"</div>`;
+  list.prepend(d);
+  document.getElementById('note-text').value='';
+  document.getElementById('note-input-area').style.display='none';
+}
+
+// ── CANVAS CHARTS ──
+function makeSparkline(id, data, color){
+  const canvas=document.getElementById(id);
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.offsetWidth||200, H=canvas.offsetHeight||40;
+  canvas.width=W; canvas.height=H;
+  const min=Math.min(...data)-2, max=Math.max(...data)+2;
+  const px=(v,i)=>i/(data.length-1)*W;
+  const py=v=>H-(v-min)/(max-min)*H*0.85-H*0.075;
+  ctx.clearRect(0,0,W,H);
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,color+'40');
+  grad.addColorStop(1,color+'00');
+  ctx.beginPath(); ctx.moveTo(px(data[0],0),py(data[0]));
+  data.forEach((v,i)=>ctx.lineTo(px(v,i),py(v)));
+  ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath();
+  ctx.fillStyle=grad; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(px(data[0],0),py(data[0]));
+  data.forEach((v,i)=>ctx.lineTo(px(v,i),py(v)));
+  ctx.strokeStyle=color; ctx.lineWidth=1.5; ctx.stroke();
+}
+
+function makeLineChart(id, datasets, labels){
+  const canvas=document.getElementById(id);
+  if(!canvas)return;
+  const W=canvas.offsetWidth||400, H=canvas.offsetHeight||140;
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  // grid
+  ctx.strokeStyle='rgba(45,212,191,0.06)'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=H*0.1+i*(H*0.8/4);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  datasets.forEach(({data,color})=>{
+    const all=[].concat(...datasets.map(d=>d.data));
+    const min=Math.min(...all)*0.9, max=Math.max(...all)*1.1;
+    const px=(i)=>W*0.02+i/(data.length-1)*(W*0.96);
+    const py=(v)=>H*0.9-(v-min)/(max-min)*(H*0.8);
+    ctx.beginPath(); ctx.moveTo(px(0),py(data[0]));
+    data.forEach((v,i)=>ctx.lineTo(px(i),py(v)));
+    ctx.strokeStyle=color; ctx.lineWidth=1.5; ctx.lineJoin='round'; ctx.stroke();
+    // dot at end
+    ctx.beginPath(); ctx.arc(px(data.length-1),py(data[data.length-1]),3,0,Math.PI*2);
+    ctx.fillStyle=color; ctx.fill();
+  });
+}
+
+// Generate fake data
+function gen(base,variance,n){return Array.from({length:n},()=>+(base+(Math.random()-0.5)*variance*2).toFixed(1));}
+
+const moistureData=gen(18,4,24);
+const pressureData=gen(42,8,24);
+const tempData=gen(34.2,0.5,24);
+const movData=gen(10,5,24);
+const swellData=[85,82,80,76,72,68,65,62,60,58,55,52].map(v=>+(v+Math.random()*2).toFixed(1));
+
+setTimeout(()=>{
+  makeSparkline('spark-moisture',moistureData,'#2dd4bf');
+  makeSparkline('spark-pressure',pressureData,'#10b981');
+  makeSparkline('spark-temp',tempData,'#f59e0b');
+  makeSparkline('spark-movement',movData,'#2dd4bf');
+  makeLineChart('main-chart',[
+    {data:pressureData,color:'#2dd4bf'},
+    {data:moistureData,color:'#10b981'},
+    {data:tempData.map(v=>v*1.2),color:'#f59e0b'}
+  ]);
+  makeSparkline('chart-moisture',moistureData,'#2dd4bf');
+  makeSparkline('chart-pressure',pressureData,'#10b981');
+  makeSparkline('chart-temp',tempData,'#f59e0b');
+  makeLineChart('chart-swelling',[{data:swellData,color:'#2dd4bf'}]);
+  makeLineChart('chart-clin',[
+    {data:pressureData.slice(0,16),color:'#2dd4bf'},
+    {data:moistureData.slice(0,16),color:'#10b981'}
+  ]);
+},100);
+
+// ── LIVE SENSOR SIMULATION ──
+let tick=0;
+setInterval(()=>{
+  tick++;
+  const moisture=+(16+Math.sin(tick*0.1)*3+Math.random()*2).toFixed(1);
+  const pressure=+(42+Math.sin(tick*0.07)*5+Math.random()*4).toFixed(0);
+  const temp=+(34.2+Math.sin(tick*0.05)*0.4+Math.random()*0.2).toFixed(1);
+  const z3=+(54+Math.sin(tick*0.08)*6+Math.random()*4).toFixed(0);
+
+  // dashboard values
+  const mEl=document.getElementById('m-moisture');
+  const pEl=document.getElementById('m-pressure');
+  const tEl=document.getElementById('m-temp');
+  if(mEl) mEl.textContent=moisture+'%';
+  if(pEl) pEl.textContent=pressure+' mmHg';
+  if(tEl) tEl.textContent=temp+'°C';
+
+  // sensor page
+  ['s-moisture','s-pressure','s-temp'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(el) el.textContent=[moisture+'%',pressure+' mmHg',temp+'°C'][i];
+  });
+  const st=document.getElementById('st-curr');
+  if(st) st.textContent=temp+'°';
+
+  // zone 3
+  const bz3=document.getElementById('bar-z3');
+  const sz3=document.getElementById('sv-z3');
+  if(bz3) bz3.style.width=Math.min(z3,100)+'%';
+  if(sz3) sz3.textContent=z3;
+
+  // moisture bar
+  const bm=document.getElementById('bar-moisture');
+  const sm=document.getElementById('sv-moisture');
+  if(bm) bm.style.width=Math.min(moisture,100)+'%';
+  if(sm) sm.textContent=moisture+'%';
+},1800);
+</script>
+</body>
+</html>
